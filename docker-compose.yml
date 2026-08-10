@@ -1,0 +1,30 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: mfa_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: mfa_user
+      POSTGRES_PASSWORD: mfa_password
+      POSTGRES_DB: mfa_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - mfa_pgdata:/var/lib/postgresql/data
+      # Auto-runs once, only on first container creation with an empty data dir
+      - ./backend/src/db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mfa_user -d mfa_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  mfa_pgdata:
+
+# Connect with DBeaver (matches the "PostgreSQL (DBeaver)" box in the architecture diagram):
+#   Host: localhost   Port: 5432
+#   Database: mfa_db
+#   User: mfa_user    Password: mfa_password

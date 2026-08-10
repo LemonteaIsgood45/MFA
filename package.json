@@ -1,0 +1,21 @@
+{
+  "name": "mfa-root",
+  "private": true,
+  "version": "1.0.0",
+  "workspaces": [
+    "apps/*",
+    "packages/*",
+    "backend"
+  ],
+  "scripts": {
+    "dev:backend": "npm run dev --workspace backend",
+    "dev:service": "npm run dev --workspace service-app",
+    "dev:analytics": "npm run dev --workspace analytics-app",
+    "dev:host": "npm run dev --workspace host",
+    "db:up": "docker compose up -d postgres",
+    "db:down": "docker compose down"
+  },
+  "devDependencies": {
+    "typescript": "^5.5.4"
+  }
+}

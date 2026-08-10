@@ -1,0 +1,35 @@
+{
+  "name": "analytics-app",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "webpack serve --config webpack.config.ts",
+    "build": "webpack build --config webpack.config.ts --mode production"
+  },
+  "dependencies": {
+    "@mfa/shared-store": "*",
+    "@mfa/shared-types": "*",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "recharts": "^2.12.7",
+    "zustand": "^4.5.4"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.3",
+    "@types/react-dom": "^18.3.0",
+    "autoprefixer": "^10.4.20",
+    "css-loader": "^7.1.2",
+    "dotenv": "^16.4.5",
+    "html-webpack-plugin": "^5.6.0",
+    "postcss": "^8.4.41",
+    "postcss-loader": "^8.1.1",
+    "style-loader": "^4.0.0",
+    "tailwindcss": "^3.4.10",
+    "ts-loader": "^9.5.1",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.5.4",
+    "webpack": "^5.93.0",
+    "webpack-cli": "^5.1.4",
+    "webpack-dev-server": "^5.0.4"
+  }
+}
