@@ -16,9 +16,7 @@ function ensureInit() {
   init({
     name: "host",
     remotes: [
-      // Vite-built remote (service-app) — exposes /assets/remoteEntry.js
       { name: "serviceApp", entry: `${SERVICE_APP_URL}/assets/remoteEntry.js` },
-      // Webpack-built remote (analytics-app) — exposes /remoteEntry.js
       { name: "analyticsApp", entry: `${ANALYTICS_APP_URL}/remoteEntry.js` },
     ],
     shared: {
@@ -38,12 +36,6 @@ function ensureInit() {
   });
 }
 
-/**
- * Loads a single exposed component from a remote, e.g.
- * loadRemoteComponent("serviceApp/ServiceList"). Shaped to match what
- * next/dynamic expects ({ default: Component }), so it can be passed
- * directly as the loader function to dynamic(..., { ssr: false }).
- */
 export async function loadRemoteComponent<P = RemoteModuleProps>(
   remoteAndModule: string
 ): Promise<{ default: ComponentType<P> }> {

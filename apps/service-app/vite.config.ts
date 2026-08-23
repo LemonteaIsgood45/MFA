@@ -1,3 +1,4 @@
+import path from "path";
 import react from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
 import federation from "@originjs/vite-plugin-federation";
@@ -12,13 +13,18 @@ export default defineConfig({
         "./ServiceList": "./src/components/ServiceList.tsx",
       },
       shared: {
-        react: { singleton: true, requiredVersion: "^18.3.1" },
-        "react-dom": { singleton: true, requiredVersion: "^18.3.1" },
-        zustand: { singleton: true, requiredVersion: "^4.5.4" },
-        "@mfa/shared-store": { singleton: true },
+        react: "react",
+        "react-dom": "react-dom",
+        zustand: "zustand",
+        "@mfa/shared-store": "@mfa/shared-store",
       },
     }),
   ],
+  resolve: {
+    alias: {
+      "@": path.resolve(__dirname, "./src"),
+    },
+  },
   server: {
     port: 5001,
     strictPort: true,
