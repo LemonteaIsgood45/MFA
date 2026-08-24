@@ -1,14 +1,14 @@
 import { useState } from "react";
 import QuantitySelector from "./QuantitySelector";
-import { getProductById } from "@/data/products";
+import type { Product } from "@/types/product";
 
 interface ProductDetailPageProps {
-  productId: string;
+  product: Product | undefined;
   onBack: () => void;
 }
 
-export default function ProductDetailPage({ productId, onBack }: ProductDetailPageProps) {
-  const product = getProductById(productId);
+export default function ProductDetailPage({ product, onBack }: ProductDetailPageProps) {
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
 
   // One selected option per variant group, e.g. { duration: "v3" } for an
   // eSIM plan, or { color: "black", capacity: "20000" } for a product that
@@ -55,20 +55,30 @@ export default function ProductDetailPage({ productId, onBack }: ProductDetailPa
       <div className="mt-4 grid grid-cols-1 gap-8 lg:grid-cols-2">
         {/* Image gallery */}
         <div>
-          <div className="flex h-72 w-full items-center justify-center rounded-lg bg-gray-100 text-7xl dark:bg-slate-800">
-            {product.icon}
-          </div>
-          <div className="mt-3 flex gap-2">
-            {["Ảnh 1", "Ảnh 2", "Ảnh 3"].map((label) => (
-              <div
-                key={label}
-                className="flex h-20 w-20 flex-col items-center justify-center gap-1 rounded-md border border-gray-200 text-center text-[10px] text-gray-500 dark:border-slate-600 dark:text-slate-400"
-              >
-                <span className="text-xl">🖼️</span>
-                {label}
-              </div>
-            ))}
-          </div>
+          <img
+            src={product.images[selectedImageIndex]?.url}
+            alt={product.images[selectedImageIndex]?.alt ?? product.name}
+            className="h-72 w-full rounded-lg bg-gray-100 object-cover dark:bg-slate-800"
+          />
+          {product.images.length > 1 && (
+            <div className="mt-3 flex gap-2">
+              {product.images.map((image, imageIndex) => (
+                <button
+                  key={image.url}
+                  type="button"
+                  onClick={() => setSelectedImageIndex(imageIndex)}
+                  className={`h-20 w-20 overflow-hidden rounded-md border-2 ${
+                    selectedImageIndex === imageIndex
+                      ? "border-red-600"
+                      : "border-gray-200 dark:border-slate-600"
+                  }`}
+                  aria-label={`Xem ${image.alt}`}
+                >
+                  <img src={image.url} alt="" className="h-full w-full object-cover" />
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Info panel */}
@@ -106,7 +116,7 @@ export default function ProductDetailPage({ productId, onBack }: ProductDetailPa
           <p className="mt-4 text-sm font-medium">Số lượng</p>
           <div className="mt-2 flex items-center gap-3">
             <QuantitySelector value={quantity} onChange={setQuantity} />
-            <span className="text-sm text-gray-400">{product.stock}</span>
+            <span className="text-sm text-gray-400">{product.stock > 0 ? "Còn hàng" : "Hết hàng"}</span>
           </div>
 
           <div className="mt-6 flex gap-3">

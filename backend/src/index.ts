@@ -4,6 +4,7 @@ import express from "express";
 import { testConnection } from "./db/pool";
 import { analyticsRouter } from "./routes/analytics.routes";
 import { authRouter } from "./routes/auth.routes";
+import { catalogRouter } from "./routes/catalog.routes";
 import { servicesRouter } from "./routes/services.routes";
 
 dotenv.config();
@@ -21,6 +22,7 @@ app.get("/health", (_req, res) => res.json({ status: "ok" }));
 app.use("/api/auth", authRouter);
 app.use("/api/services", servicesRouter);
 app.use("/api/analytics", analyticsRouter);
+app.use("/api/catalog", catalogRouter);
 
 app.listen(port, async () => {
   console.log(`[backend] listening on http://localhost:${port}`);

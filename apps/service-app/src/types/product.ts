@@ -21,15 +21,20 @@ export interface DetailRow {
   value: string;
 }
 
+export interface ProductImage {
+  url: string;
+  alt: string;
+}
+
 export type ProductCategory = "esim" | "accessory";
 
 export interface Product {
   id: string;
   category: ProductCategory;
   name: string;
-  icon: string; // emoji placeholder standing in for a product photo
+  images: ProductImage[];
   basePrice: number;
-  stock: string;
+  stock: number;
   description: string;
   variantGroups: VariantGroup[];
   detailRows: DetailRow[];
