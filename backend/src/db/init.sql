@@ -65,6 +65,45 @@ CREATE TABLE IF NOT EXISTS promo_banners (
   image_url TEXT NOT NULL UNIQUE
 );
 
+-- ============================================================================
+-- Additions for analytics-app: user moderation/session state + real order
+-- data (so sales charts aren't just a single precomputed table).
+-- ============================================================================
+
+-- Supports the Users tab: ban/unban, and "created_at" for a signups-over-time
+-- chart if you want one later.
+ALTER TABLE users ADD COLUMN IF NOT EXISTS is_banned BOOLEAN NOT NULL DEFAULT false;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ NOT NULL DEFAULT now();
+
+-- "num in session": a session row exists per login and gets touched on
+-- activity. The backend treats last_seen_at within the last 15 minutes as
+-- "currently active" — see analytics.routes.ts.
+CREATE TABLE IF NOT EXISTS user_sessions (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  last_seen_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- Real orders instead of only a precomputed revenue_by_month table — lets
+-- the Sales tab derive more than one chart (status breakdown, top products)
+-- from the same underlying data, which is closer to how a real backend
+-- would work even though this one's still a mock.
+CREATE TABLE IF NOT EXISTS orders (
+  id UUID PRIMARY KEY,
+  user_id UUID REFERENCES users(id) ON DELETE SET NULL,
+  status TEXT NOT NULL CHECK (status IN ('completed', 'pending', 'cancelled')) DEFAULT 'completed',
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS order_items (
+  id BIGSERIAL PRIMARY KEY,
+  order_id UUID NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
+  product_id TEXT NOT NULL REFERENCES catalog_products(id),
+  quantity INTEGER NOT NULL CHECK (quantity > 0),
+  unit_price INTEGER NOT NULL CHECK (unit_price >= 0)
+);
+
 -- Seed data (password for the demo admin user is "password123", hashed with bcrypt offline)
 INSERT INTO users (name, email, password_hash, role)
 VALUES ('Admin Demo', 'admin@mfa.dev', '$2b$10$CwTycUXWue0Thq9StjUM0uJ8Y3sq6zX8vHnFZm3zNz.d1ZnW3v0Wi', 'admin')
@@ -120,3 +159,88 @@ INSERT INTO promo_banners (image_url) VALUES
   ('https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=1600&q=85'),
   ('https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?auto=format&fit=crop&w=1600&q=85')
 ON CONFLICT (image_url) DO NOTHING;
+
+-- More users, with explicit ids so orders/sessions below can reference them,
+-- and a couple already banned so the Users tab has something to show.
+INSERT INTO users (id, name, email, password_hash, role, is_banned, created_at) VALUES
+  ('10000000-0000-4000-a000-000000000001', 'Nguyễn Văn An',   'an.nguyen@example.com',   '$2b$10$dummydummydummydummydummydummydummydummydummydu', 'customer', false, now() - interval '210 days'),
+  ('10000000-0000-4000-a000-000000000002', 'Trần Thị Bích',   'bich.tran@example.com',   '$2b$10$dummydummydummydummydummydummydummydummydummydu', 'customer', false, now() - interval '180 days'),
+  ('10000000-0000-4000-a000-000000000003', 'Lê Minh Châu',    'chau.le@example.com',     '$2b$10$dummydummydummydummydummydummydummydummydummydu', 'customer', true,  now() - interval '160 days'),
+  ('10000000-0000-4000-a000-000000000004', 'Phạm Quốc Dũng',  'dung.pham@example.com',   '$2b$10$dummydummydummydummydummydummydummydummydummydu', 'customer', false, now() - interval '140 days'),
+  ('10000000-0000-4000-a000-000000000005', 'Hoàng Thị Em',    'em.hoang@example.com',    '$2b$10$dummydummydummydummydummydummydummydummydummydu', 'customer', false, now() - interval '120 days'),
+  ('10000000-0000-4000-a000-000000000006', 'Vũ Anh Phong',    'phong.vu@example.com',    '$2b$10$dummydummydummydummydummydummydummydummydummydu', 'customer', false, now() - interval '100 days'),
+  ('10000000-0000-4000-a000-000000000007', 'Đặng Thị Giang',  'giang.dang@example.com',  '$2b$10$dummydummydummydummydummydummydummydummydummydu', 'customer', true,  now() - interval '90 days'),
+  ('10000000-0000-4000-a000-000000000008', 'Bùi Văn Hải',     'hai.bui@example.com',     '$2b$10$dummydummydummydummydummydummydummydummydummydu', 'customer', false, now() - interval '75 days'),
+  ('10000000-0000-4000-a000-000000000009', 'Ngô Thị Hoa',     'hoa.ngo@example.com',     '$2b$10$dummydummydummydummydummydummydummydummydummydu', 'customer', false, now() - interval '60 days'),
+  ('10000000-0000-4000-a000-000000000010', 'Đỗ Minh Khang',   'khang.do@example.com',    '$2b$10$dummydummydummydummydummydummydummydummydummydu', 'customer', false, now() - interval '45 days'),
+  ('10000000-0000-4000-a000-000000000011', 'Lý Thị Lan',      'lan.ly@example.com',      '$2b$10$dummydummydummydummydummydummydummydummydummydu', 'customer', false, now() - interval '30 days'),
+  ('10000000-0000-4000-a000-000000000012', 'Trịnh Văn Minh',  'minh.trinh@example.com',  '$2b$10$dummydummydummydummydummydummydummydummydummydu', 'staff',    false, now() - interval '300 days')
+ON CONFLICT (email) DO NOTHING;
+
+-- Active sessions: last_seen_at within the last 15 minutes counts as
+-- "currently active" — 5 of the 12 users below are "in session" right now.
+INSERT INTO user_sessions (user_id, created_at, last_seen_at) VALUES
+  ('10000000-0000-4000-a000-000000000001', now() - interval '40 minutes', now() - interval '2 minutes'),
+  ('10000000-0000-4000-a000-000000000002', now() - interval '25 minutes', now() - interval '1 minutes'),
+  ('10000000-0000-4000-a000-000000000005', now() - interval '10 minutes', now() - interval '4 minutes'),
+  ('10000000-0000-4000-a000-000000000009', now() - interval '60 minutes', now() - interval '8 minutes'),
+  ('10000000-0000-4000-a000-000000000011', now() - interval '5 minutes',  now() - interval '30 seconds'),
+  ('10000000-0000-4000-a000-000000000004', now() - interval '2 days',     now() - interval '2 days'),
+  ('10000000-0000-4000-a000-000000000006', now() - interval '5 days',     now() - interval '5 days')
+ON CONFLICT DO NOTHING;
+
+-- Orders + line items spread across the same 6 months as revenue_by_month,
+-- so the Sales tab can derive a top-products chart and an order-status
+-- breakdown from real rows instead of only reading one precomputed table.
+INSERT INTO orders (id, user_id, status, created_at) VALUES
+  ('20000000-0000-4000-a000-000000000001', '10000000-0000-4000-a000-000000000001', 'completed', '2026-02-05'),
+  ('20000000-0000-4000-a000-000000000002', '10000000-0000-4000-a000-000000000002', 'completed', '2026-02-14'),
+  ('20000000-0000-4000-a000-000000000003', '10000000-0000-4000-a000-000000000004', 'cancelled',  '2026-02-20'),
+  ('20000000-0000-4000-a000-000000000004', '10000000-0000-4000-a000-000000000005', 'completed', '2026-03-02'),
+  ('20000000-0000-4000-a000-000000000005', '10000000-0000-4000-a000-000000000006', 'completed', '2026-03-11'),
+  ('20000000-0000-4000-a000-000000000006', '10000000-0000-4000-a000-000000000008', 'pending',   '2026-03-25'),
+  ('20000000-0000-4000-a000-000000000007', '10000000-0000-4000-a000-000000000009', 'completed', '2026-04-03'),
+  ('20000000-0000-4000-a000-000000000008', '10000000-0000-4000-a000-000000000010', 'completed', '2026-04-15'),
+  ('20000000-0000-4000-a000-000000000009', '10000000-0000-4000-a000-000000000011', 'completed', '2026-04-22'),
+  ('20000000-0000-4000-a000-000000000010', '10000000-0000-4000-a000-000000000001', 'completed', '2026-05-04'),
+  ('20000000-0000-4000-a000-000000000011', '10000000-0000-4000-a000-000000000002', 'completed', '2026-05-10'),
+  ('20000000-0000-4000-a000-000000000012', '10000000-0000-4000-a000-000000000005', 'cancelled',  '2026-05-19'),
+  ('20000000-0000-4000-a000-000000000013', '10000000-0000-4000-a000-000000000006', 'completed', '2026-05-27'),
+  ('20000000-0000-4000-a000-000000000014', '10000000-0000-4000-a000-000000000008', 'completed', '2026-06-01'),
+  ('20000000-0000-4000-a000-000000000015', '10000000-0000-4000-a000-000000000009', 'completed', '2026-06-09'),
+  ('20000000-0000-4000-a000-000000000016', '10000000-0000-4000-a000-000000000010', 'pending',   '2026-06-18'),
+  ('20000000-0000-4000-a000-000000000017', '10000000-0000-4000-a000-000000000011', 'completed', '2026-06-26'),
+  ('20000000-0000-4000-a000-000000000018', '10000000-0000-4000-a000-000000000001', 'completed', '2026-07-02'),
+  ('20000000-0000-4000-a000-000000000019', '10000000-0000-4000-a000-000000000002', 'completed', '2026-07-08'),
+  ('20000000-0000-4000-a000-000000000020', '10000000-0000-4000-a000-000000000004', 'completed', '2026-07-15'),
+  ('20000000-0000-4000-a000-000000000021', '10000000-0000-4000-a000-000000000005', 'completed', '2026-07-22'),
+  ('20000000-0000-4000-a000-000000000022', '10000000-0000-4000-a000-000000000006', 'cancelled',  '2026-07-27')
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO order_items (order_id, product_id, quantity, unit_price) VALUES
+  ('20000000-0000-4000-a000-000000000001', 'plan-giga-01', 1, 350000),
+  ('20000000-0000-4000-a000-000000000002', 'acc-02', 2, 259000),
+  ('20000000-0000-4000-a000-000000000003', 'plan-sky-01', 1, 399000),
+  ('20000000-0000-4000-a000-000000000004', 'plan-giga-01', 1, 350000),
+  ('20000000-0000-4000-a000-000000000004', 'acc-04', 1, 89000),
+  ('20000000-0000-4000-a000-000000000005', 'plan-nova-01', 1, 299000),
+  ('20000000-0000-4000-a000-000000000006', 'acc-05', 1, 349000),
+  ('20000000-0000-4000-a000-000000000007', 'plan-giga-02', 1, 450000),
+  ('20000000-0000-4000-a000-000000000008', 'plan-vina-01', 1, 199000),
+  ('20000000-0000-4000-a000-000000000008', 'acc-01', 1, 149000),
+  ('20000000-0000-4000-a000-000000000009', 'acc-02', 1, 259000),
+  ('20000000-0000-4000-a000-000000000010', 'plan-giga-01', 1, 350000),
+  ('20000000-0000-4000-a000-000000000011', 'plan-sky-02', 2, 149000),
+  ('20000000-0000-4000-a000-000000000012', 'plan-sky-01', 1, 399000),
+  ('20000000-0000-4000-a000-000000000013', 'acc-03', 1, 399000),
+  ('20000000-0000-4000-a000-000000000014', 'plan-giga-02', 1, 450000),
+  ('20000000-0000-4000-a000-000000000015', 'acc-04', 3, 89000),
+  ('20000000-0000-4000-a000-000000000016', 'plan-nova-01', 1, 299000),
+  ('20000000-0000-4000-a000-000000000017', 'acc-05', 1, 349000),
+  ('20000000-0000-4000-a000-000000000017', 'acc-01', 1, 149000),
+  ('20000000-0000-4000-a000-000000000018', 'plan-giga-01', 1, 350000),
+  ('20000000-0000-4000-a000-000000000019', 'plan-vina-01', 1, 199000),
+  ('20000000-0000-4000-a000-000000000020', 'acc-02', 1, 259000),
+  ('20000000-0000-4000-a000-000000000021', 'plan-sky-01', 1, 399000),
+  ('20000000-0000-4000-a000-000000000022', 'acc-03', 1, 399000)
+ON CONFLICT DO NOTHING;

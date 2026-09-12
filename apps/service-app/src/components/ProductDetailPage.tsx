@@ -5,9 +5,10 @@ import type { Product } from "@/types/product";
 interface ProductDetailPageProps {
   product: Product | undefined;
   onBack: () => void;
+  token?: string | null;
 }
 
-export default function ProductDetailPage({ product, onBack }: ProductDetailPageProps) {
+export default function ProductDetailPage({ product, onBack, token }: ProductDetailPageProps) {
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
 
   // One selected option per variant group, e.g. { duration: "v3" } for an
@@ -38,6 +39,10 @@ export default function ProductDetailPage({ product, onBack }: ProductDetailPage
   const totalPrice = unitPrice * quantity;
 
   function handleAction(label: string) {
+    if (!token) {
+      setFeedback("Please sign in from the Host App before adding to cart or purchasing.");
+      return;
+    }
     const chosenLabels = product!.variantGroups
       .map((group) => group.options.find((opt) => opt.id === selections[group.id])?.label)
       .filter(Boolean)
@@ -123,14 +128,16 @@ export default function ProductDetailPage({ product, onBack }: ProductDetailPage
             <button
               type="button"
               onClick={() => handleAction("Đã thêm vào giỏ hàng")}
-              className="flex-1 rounded-md border border-red-600 px-4 py-2 text-sm font-semibold text-red-600 hover:bg-red-50 dark:hover:bg-red-500/10"
+              className="flex-1 rounded-md border border-red-600 px-4 py-2 text-sm font-semibold text-red-600 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:bg-red-500/10"
+              disabled={!token}
             >
               🛒 Thêm vào giỏ hàng
             </button>
             <button
               type="button"
               onClick={() => handleAction("Đặt mua thành công")}
-              className="flex-1 rounded-md bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700"
+              className="flex-1 rounded-md bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
+              disabled={!token}
             >
               Mua ngay
             </button>

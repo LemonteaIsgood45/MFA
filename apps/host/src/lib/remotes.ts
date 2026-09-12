@@ -16,8 +16,15 @@ function ensureInit() {
   init({
     name: "host",
     remotes: [
-      { name: "serviceApp", entry: `${SERVICE_APP_URL}/assets/remoteEntry.js` },
-      { name: "analyticsApp", entry: `${ANALYTICS_APP_URL}/remoteEntry.js` },
+      {
+        name: "serviceApp",
+        entry: `${SERVICE_APP_URL}/assets/remoteEntry.js`,
+        type: "module",
+      },
+      {
+        name: "analyticsApp",
+        entry: `${ANALYTICS_APP_URL}/remoteEntry.js`,
+      },
     ],
     shared: {
       react: {

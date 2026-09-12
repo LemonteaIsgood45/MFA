@@ -43,6 +43,7 @@ export default function ServiceList(props: RemoteModuleProps) {
           <ProductDetailPage
             product={products.find((product) => product.id === view.productId)}
             onBack={() => setView({ name: "list" })}
+            token={props.token}
           />
         )}
       </div>

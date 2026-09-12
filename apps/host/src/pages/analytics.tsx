@@ -4,10 +4,13 @@ import Layout from "@/components/Layout";
 import { loadRemoteComponent } from "@/lib/remotes";
 import { useAuthToken, useTheme } from "@mfa/shared-store";
 
-const RemoteDashboard = dynamic(() => loadRemoteComponent("analyticsApp/Dashboard"), {
-  ssr: false,
-  loading: () => <p>Đang tải Analytics App...</p>,
-});
+const RemoteDashboard = dynamic(
+  () => loadRemoteComponent("analyticsApp/Dashboard"),
+  {
+    ssr: false,
+    loading: () => <p>Đang tải Analytics App...</p>,
+  },
+);
 
 export default function AnalyticsPage() {
   const token = useAuthToken();
@@ -15,14 +18,10 @@ export default function AnalyticsPage() {
 
   return (
     <Layout>
-      <h1 className="text-2xl font-semibold">Thống kê</h1>
-      <p className="mt-1 text-gray-500 dark:text-slate-400">
-        Module này được fetch runtime từ Analytics App (Webpack, cổng 5002).
-      </p>
+      {/* No page-level heading here — Dashboard renders its own full-page
+          header + tabs now, so a duplicate title above it would be redundant. */}
       <Suspense fallback={<p>Đang tải...</p>}>
-        <div className="mt-4">
-          <RemoteDashboard token={token} theme={theme} />
-        </div>
+        <RemoteDashboard token={token} theme={theme} />
       </Suspense>
     </Layout>
   );

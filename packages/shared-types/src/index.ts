@@ -6,8 +6,13 @@ export interface User {
   id: string;
   name: string;
   email: string;
-  role: "admin" | "staff" | "customer";
+  role: "admin" | "moderator" | "customer";
 }
+
+export type PrivilegedRole = "admin" | "moderator";
+
+export const canViewAnalytics = (user: User | null | undefined): boolean =>
+  user?.role === "admin" || user?.role === "moderator";
 
 export interface AuthToken {
   token: string;

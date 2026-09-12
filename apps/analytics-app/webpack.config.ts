@@ -3,7 +3,7 @@ import dotenv from "dotenv";
 import HtmlWebpackPlugin from "html-webpack-plugin";
 import webpack from "webpack";
 import type { Configuration } from "webpack";
-import "webpack-dev-server"; // pulls in devServer typings
+import "webpack-dev-server";
 
 dotenv.config();
 
@@ -28,6 +28,9 @@ const config: Configuration = {
   },
   resolve: {
     extensions: [".ts", ".tsx", ".js"],
+    alias: {
+      "@": path.resolve(process.cwd(), "src"),
+    },
   },
   module: {
     rules: [
@@ -60,8 +63,6 @@ const config: Configuration = {
       template: "./public/index.html",
     }),
     new DefinePlugin({
-      // Webpack doesn't polyfill process.env in the browser like Vite/Next do,
-      // so we inline this one value explicitly at build time.
       "process.env.BACKEND_URL": JSON.stringify(backendUrl),
     }),
   ],
