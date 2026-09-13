@@ -14,7 +14,7 @@ export default function Sidebar() {
   const router = useRouter();
   const user = useCurrentUser();
   return (
-    <nav className="flex w-max shrink-0 flex-col gap-2 whitespace-nowrap border-r border-gray-200 p-4 dark:border-slate-700">
+    <nav className="flex w-max shrink-0 flex-col gap-2 whitespace-nowrap border-rp-4">
       {links
         .filter((link) => link.href !== "/analytics" || canViewAnalytics(user))
         .map((link) => (
