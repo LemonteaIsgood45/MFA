@@ -7,7 +7,7 @@ CREATE TABLE IF NOT EXISTS users (
   name TEXT NOT NULL,
   email TEXT UNIQUE NOT NULL,
   password_hash TEXT NOT NULL,
-  role TEXT NOT NULL CHECK (role IN ('admin', 'staff', 'customer')) DEFAULT 'staff'
+  role TEXT NOT NULL CHECK (role IN ('admin', 'moderator', 'customer')) DEFAULT 'customer'
 );
 
 CREATE TABLE IF NOT EXISTS service_plans (
@@ -74,6 +74,12 @@ CREATE TABLE IF NOT EXISTS promo_banners (
 -- chart if you want one later.
 ALTER TABLE users ADD COLUMN IF NOT EXISTS is_banned BOOLEAN NOT NULL DEFAULT false;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ NOT NULL DEFAULT now();
+
+-- Update existing user role constraint if migrating an existing DB
+ALTER TABLE users DROP CONSTRAINT IF EXISTS users_role_check;
+ALTER TABLE users 
+  ADD CONSTRAINT users_role_check 
+  CHECK (role IN ('admin', 'moderator', 'customer'));
 
 -- "num in session": a session row exists per login and gets touched on
 -- activity. The backend treats last_seen_at within the last 15 minutes as
@@ -163,18 +169,18 @@ ON CONFLICT (image_url) DO NOTHING;
 -- More users, with explicit ids so orders/sessions below can reference them,
 -- and a couple already banned so the Users tab has something to show.
 INSERT INTO users (id, name, email, password_hash, role, is_banned, created_at) VALUES
-  ('10000000-0000-4000-a000-000000000001', 'Nguyễn Văn An',   'an.nguyen@example.com',   '$2b$10$dummydummydummydummydummydummydummydummydummydu', 'customer', false, now() - interval '210 days'),
-  ('10000000-0000-4000-a000-000000000002', 'Trần Thị Bích',   'bich.tran@example.com',   '$2b$10$dummydummydummydummydummydummydummydummydummydu', 'customer', false, now() - interval '180 days'),
-  ('10000000-0000-4000-a000-000000000003', 'Lê Minh Châu',    'chau.le@example.com',     '$2b$10$dummydummydummydummydummydummydummydummydummydu', 'customer', true,  now() - interval '160 days'),
-  ('10000000-0000-4000-a000-000000000004', 'Phạm Quốc Dũng',  'dung.pham@example.com',   '$2b$10$dummydummydummydummydummydummydummydummydummydu', 'customer', false, now() - interval '140 days'),
-  ('10000000-0000-4000-a000-000000000005', 'Hoàng Thị Em',    'em.hoang@example.com',    '$2b$10$dummydummydummydummydummydummydummydummydummydu', 'customer', false, now() - interval '120 days'),
-  ('10000000-0000-4000-a000-000000000006', 'Vũ Anh Phong',    'phong.vu@example.com',    '$2b$10$dummydummydummydummydummydummydummydummydummydu', 'customer', false, now() - interval '100 days'),
-  ('10000000-0000-4000-a000-000000000007', 'Đặng Thị Giang',  'giang.dang@example.com',  '$2b$10$dummydummydummydummydummydummydummydummydummydu', 'customer', true,  now() - interval '90 days'),
-  ('10000000-0000-4000-a000-000000000008', 'Bùi Văn Hải',     'hai.bui@example.com',     '$2b$10$dummydummydummydummydummydummydummydummydummydu', 'customer', false, now() - interval '75 days'),
-  ('10000000-0000-4000-a000-000000000009', 'Ngô Thị Hoa',     'hoa.ngo@example.com',     '$2b$10$dummydummydummydummydummydummydummydummydummydu', 'customer', false, now() - interval '60 days'),
-  ('10000000-0000-4000-a000-000000000010', 'Đỗ Minh Khang',   'khang.do@example.com',    '$2b$10$dummydummydummydummydummydummydummydummydummydu', 'customer', false, now() - interval '45 days'),
-  ('10000000-0000-4000-a000-000000000011', 'Lý Thị Lan',      'lan.ly@example.com',      '$2b$10$dummydummydummydummydummydummydummydummydummydu', 'customer', false, now() - interval '30 days'),
-  ('10000000-0000-4000-a000-000000000012', 'Trịnh Văn Minh',  'minh.trinh@example.com',  '$2b$10$dummydummydummydummydummydummydummydummydummydu', 'staff',    false, now() - interval '300 days')
+  ('10000000-0000-4000-a000-000000000001', 'Nguyễn Văn An',   'an.nguyen@example.com',   '$2b$10$dummydummydummydummydummydummydummydummydummydu', 'customer',  false, now() - interval '210 days'),
+  ('10000000-0000-4000-a000-000000000002', 'Trần Thị Bích',   'bich.tran@example.com',   '$2b$10$dummydummydummydummydummydummydummydummydummydu', 'customer',  false, now() - interval '180 days'),
+  ('10000000-0000-4000-a000-000000000003', 'Lê Minh Châu',    'chau.le@example.com',    '$2b$10$dummydummydummydummydummydummydummydummydummydu', 'customer',  true,  now() - interval '160 days'),
+  ('10000000-0000-4000-a000-000000000004', 'Phạm Quốc Dũng',  'dung.pham@example.com',   '$2b$10$dummydummydummydummydummydummydummydummydummydu', 'customer',  false, now() - interval '140 days'),
+  ('10000000-0000-4000-a000-000000000005', 'Hoàng Thị Em',    'em.hoang@example.com',    '$2b$10$dummydummydummydummydummydummydummydummydummydu', 'customer',  false, now() - interval '120 days'),
+  ('10000000-0000-4000-a000-000000000006', 'Vũ Anh Phong',    'phong.vu@example.com',    '$2b$10$dummydummydummydummydummydummydummydummydummydu', 'customer',  false, now() - interval '100 days'),
+  ('10000000-0000-4000-a000-000000000007', 'Đặng Thị Giang',  'giang.dang@example.com',  '$2b$10$dummydummydummydummydummydummydummydummydummydu', 'customer',  true,  now() - interval '90 days'),
+  ('10000000-0000-4000-a000-000000000008', 'Bùi Văn Hải',     'hai.bui@example.com',     '$2b$10$dummydummydummydummydummydummydummydummydummydu', 'customer',  false, now() - interval '75 days'),
+  ('10000000-0000-4000-a000-000000000009', 'Ngô Thị Hoa',     'hoa.ngo@example.com',     '$2b$10$dummydummydummydummydummydummydummydummydummydu', 'customer',  false, now() - interval '60 days'),
+  ('10000000-0000-4000-a000-000000000010', 'Đỗ Minh Khang',   'khang.do@example.com',    '$2b$10$dummydummydummydummydummydummydummydummydummydu', 'customer',  false, now() - interval '45 days'),
+  ('10000000-0000-4000-a000-000000000011', 'Lý Thị Lan',      'lan.ly@example.com',      '$2b$10$dummydummydummydummydummydummydummydummydummydu', 'customer',  false, now() - interval '30 days'),
+  ('10000000-0000-4000-a000-000000000012', 'Trịnh Văn Minh',  'minh.trinh@example.com',  '$2b$10$dummydummydummydummydummydummydummydummydummydu', 'moderator', false, now() - interval '300 days')
 ON CONFLICT (email) DO NOTHING;
 
 -- Active sessions: last_seen_at within the last 15 minutes counts as
@@ -195,7 +201,7 @@ ON CONFLICT DO NOTHING;
 INSERT INTO orders (id, user_id, status, created_at) VALUES
   ('20000000-0000-4000-a000-000000000001', '10000000-0000-4000-a000-000000000001', 'completed', '2026-02-05'),
   ('20000000-0000-4000-a000-000000000002', '10000000-0000-4000-a000-000000000002', 'completed', '2026-02-14'),
-  ('20000000-0000-4000-a000-000000000003', '10000000-0000-4000-a000-000000000004', 'cancelled',  '2026-02-20'),
+  ('20000000-0000-4000-a000-000000000003', '10000000-0000-4000-a000-000000000004', 'cancelled', '2026-02-20'),
   ('20000000-0000-4000-a000-000000000004', '10000000-0000-4000-a000-000000000005', 'completed', '2026-03-02'),
   ('20000000-0000-4000-a000-000000000005', '10000000-0000-4000-a000-000000000006', 'completed', '2026-03-11'),
   ('20000000-0000-4000-a000-000000000006', '10000000-0000-4000-a000-000000000008', 'pending',   '2026-03-25'),
@@ -204,7 +210,7 @@ INSERT INTO orders (id, user_id, status, created_at) VALUES
   ('20000000-0000-4000-a000-000000000009', '10000000-0000-4000-a000-000000000011', 'completed', '2026-04-22'),
   ('20000000-0000-4000-a000-000000000010', '10000000-0000-4000-a000-000000000001', 'completed', '2026-05-04'),
   ('20000000-0000-4000-a000-000000000011', '10000000-0000-4000-a000-000000000002', 'completed', '2026-05-10'),
-  ('20000000-0000-4000-a000-000000000012', '10000000-0000-4000-a000-000000000005', 'cancelled',  '2026-05-19'),
+  ('20000000-0000-4000-a000-000000000012', '10000000-0000-4000-a000-000000000005', 'cancelled', '2026-05-19'),
   ('20000000-0000-4000-a000-000000000013', '10000000-0000-4000-a000-000000000006', 'completed', '2026-05-27'),
   ('20000000-0000-4000-a000-000000000014', '10000000-0000-4000-a000-000000000008', 'completed', '2026-06-01'),
   ('20000000-0000-4000-a000-000000000015', '10000000-0000-4000-a000-000000000009', 'completed', '2026-06-09'),
@@ -214,7 +220,7 @@ INSERT INTO orders (id, user_id, status, created_at) VALUES
   ('20000000-0000-4000-a000-000000000019', '10000000-0000-4000-a000-000000000002', 'completed', '2026-07-08'),
   ('20000000-0000-4000-a000-000000000020', '10000000-0000-4000-a000-000000000004', 'completed', '2026-07-15'),
   ('20000000-0000-4000-a000-000000000021', '10000000-0000-4000-a000-000000000005', 'completed', '2026-07-22'),
-  ('20000000-0000-4000-a000-000000000022', '10000000-0000-4000-a000-000000000006', 'cancelled',  '2026-07-27')
+  ('20000000-0000-4000-a000-000000000022', '10000000-0000-4000-a000-000000000006', 'cancelled', '2026-07-27')
 ON CONFLICT (id) DO NOTHING;
 
 INSERT INTO order_items (order_id, product_id, quantity, unit_price) VALUES
@@ -243,4 +249,28 @@ INSERT INTO order_items (order_id, product_id, quantity, unit_price) VALUES
   ('20000000-0000-4000-a000-000000000020', 'acc-02', 1, 259000),
   ('20000000-0000-4000-a000-000000000021', 'plan-sky-01', 1, 399000),
   ('20000000-0000-4000-a000-000000000022', 'acc-03', 1, 399000)
-ON CONFLICT DO NOTHING;
+ON CONFLICT (id) DO NOTHING;
+
+CREATE TABLE IF NOT EXISTS cart_items (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  product_id TEXT NOT NULL REFERENCES catalog_products(id) ON DELETE CASCADE,
+  variant_selections JSONB NOT NULL DEFAULT '{}'::jsonb,
+  quantity INTEGER NOT NULL CHECK (quantity > 0),
+  -- Snapshot of the price at add-to-cart time, not a live lookup — so a
+  -- later price change on the product doesn't retroactively change what's
+  -- already sitting in someone's cart.
+  unit_price INTEGER NOT NULL CHECK (unit_price >= 0),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- orders.id was only ever populated with explicit UUIDs in the seed data;
+-- checkout needs to generate one itself.
+ALTER TABLE orders ALTER COLUMN id SET DEFAULT gen_random_uuid();
+
+-- A couple of sample cart rows for the demo admin account, purely for
+-- convenience while testing the Cart page.
+INSERT INTO cart_items (user_id, product_id, variant_selections, quantity, unit_price)
+SELECT id, 'plan-giga-01', '{"duration":"v3"}'::jsonb, 1, 320000 FROM users WHERE email = 'admin@mfa.dev'
+UNION ALL
+SELECT id, 'acc-04', '{"length":"2m"}'::jsonb, 2, 109000 FROM users WHERE email = 'admin@mfa.dev';

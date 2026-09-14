@@ -1,18 +1,37 @@
 import type { AppProps } from "next/app";
-import React, { useEffect } from "react";
-import { useTheme } from "@mfa/shared-store";
-import "@/styles/globals.css";
+import React, { useEffect, startTransition } from "react";
+import { fetchCart } from "@/lib/cart";
+import {
+  hydrateSession,
+  useAuthToken,
+  useGlobalStore,
+  useTheme,
+} from "@mfa/shared-store";
+// @ts-expect-error - Next.js provides the global CSS type declarations at runtime.
+import "../styles/globals.css";
 
 export default function App({ Component, pageProps }: AppProps) {
   const theme = useTheme();
+  const token = useAuthToken();
+  const setCart = useGlobalStore((s) => s.setCart);
 
-  // Toggling the class on <html> (not a wrapper div inside <body>) means
-  // <body> itself — an ancestor of any wrapper we could render — is a
-  // DESCENDANT of html.dark, so its own `@apply bg-bg text-text-primary`
-  // rule in globals.css correctly resolves the .dark variable overrides.
+  // Wrap hydration in startTransition to prevent breaking active Suspense hydration
+  useEffect(() => {
+    startTransition(() => {
+      hydrateSession();
+    });
+  }, []);
+
   useEffect(() => {
     document.documentElement.classList.toggle("dark", theme === "dark");
   }, [theme]);
+
+  useEffect(() => {
+    if (!token) return;
+    fetchCart(token)
+      .then(setCart)
+      .catch(() => {});
+  }, [token, setCart]);
 
   return <Component {...pageProps} />;
 }

@@ -44,3 +44,12 @@ export interface RemoteModuleProps {
   token?: string | null;
   theme?: ThemeMode;
 }
+
+export interface CartItem {
+  id: string;
+  productId: string;
+  productName?: string;
+  variantSelections: Record<string, string>;
+  quantity: number;
+  unitPrice: number;
+}

@@ -1,62 +1,105 @@
-import { create } from "zustand";
-import type { AuthToken, ThemeMode, User } from "@mfa/shared-types";
+import { create, createStore } from "zustand";
+import type { AuthToken, CartItem, ThemeMode, User } from "@mfa/shared-types";
 
-/**
- * This store is published as a Module Federation "shared" singleton
- * (see the `shared` block in each app's webpack/vite federation config).
- * Because Module Federation loads every remote into the SAME browser
- * JS realm as the host at runtime, all three apps end up importing the
- * exact same module instance -> the exact same Zustand store instance.
- * That is what makes token/theme/user state stay in sync between
- * Host, Service App and Analytics App without any prop drilling.
- */
 interface GlobalState {
   user: User | null;
   auth: AuthToken | null;
   theme: ThemeMode;
+  cart: CartItem[];
   setUser: (user: User | null) => void;
   setAuth: (auth: AuthToken | null) => void;
   setTheme: (theme: ThemeMode) => void;
+  setCart: (items: CartItem[]) => void;
+  upsertCartItem: (item: CartItem) => void;
+  removeCartItemLocal: (id: string) => void;
+  clearCart: () => void;
   logout: () => void;
 }
 
 const SESSION_KEY = "mfa-auth-session";
 type StoredSession = Pick<GlobalState, "user" | "auth">;
 
-function saveSession(session: StoredSession): void {
-  if (typeof window !== "undefined") window.sessionStorage.setItem(SESSION_KEY, JSON.stringify(session));
-}
-
-export const useGlobalStore = create<GlobalState>((set) => ({
-  user: null,
-  auth: null,
-  theme: "light",
-  setUser: (user) => {
-    set({ user });
-    saveSession({ user, auth: useGlobalStore.getState().auth });
-  },
-  setAuth: (auth) => {
-    set({ auth });
-    saveSession({ user: useGlobalStore.getState().user, auth });
-  },
-  setTheme: (theme) => set({ theme }),
-  logout: () => {
-    set({ user: null, auth: null });
-    if (typeof window !== "undefined") window.sessionStorage.removeItem(SESSION_KEY);
-  },
-}));
-
-/** Hydrates the federation-wide store once in the host browser session. */
-export function hydrateSession(): void {
-  if (typeof window === "undefined") return;
+function getInitialSession(): StoredSession {
+  if (typeof window === "undefined") return { user: null, auth: null };
   const raw = window.sessionStorage.getItem(SESSION_KEY);
-  if (!raw) return;
+  if (!raw) return { user: null, auth: null };
   try {
     const session = JSON.parse(raw) as StoredSession;
-    if (session.auth && session.auth.expiresAt > Date.now() && session.user) useGlobalStore.setState(session);
-    else window.sessionStorage.removeItem(SESSION_KEY);
+    if (session.auth && session.auth.expiresAt > Date.now() && session.user) {
+      return session;
+    }
+    window.sessionStorage.removeItem(SESSION_KEY);
   } catch {
     window.sessionStorage.removeItem(SESSION_KEY);
+  }
+  return { user: null, auth: null };
+}
+
+function saveSession(session: StoredSession): void {
+  if (typeof window !== "undefined") {
+    window.sessionStorage.setItem(SESSION_KEY, JSON.stringify(session));
+  }
+}
+
+// 1. Force a single true singleton instance on the browser global window
+const globalWin = typeof window !== "undefined" ? (window as any) : {};
+
+const initialSession = getInitialSession();
+
+const storeApi =
+  globalWin.__MFA_SHARED_STORE__ ||
+  (globalWin.__MFA_SHARED_STORE__ = createStore<GlobalState>((set, get) => ({
+    user: initialSession.user,
+    auth: initialSession.auth,
+    theme: "light",
+    cart: [],
+    setUser: (user) => {
+      set({ user });
+      saveSession({ user, auth: get().auth });
+    },
+    setAuth: (auth) => {
+      set({ auth });
+      saveSession({ user: get().user, auth });
+    },
+    setTheme: (theme) => set({ theme }),
+    setCart: (cart) => set({ cart }),
+    upsertCartItem: (item) =>
+      set((state) => {
+        const exists = state.cart.some((c) => c.id === item.id);
+        return {
+          cart: exists
+            ? state.cart.map((c) => (c.id === item.id ? item : c))
+            : [...state.cart, item],
+        };
+      }),
+    removeCartItemLocal: (id) =>
+      set((state) => ({ cart: state.cart.filter((c) => c.id !== id) })),
+    clearCart: () => set({ cart: [] }),
+    logout: () => {
+      set({ user: null, auth: null, cart: [] });
+      if (typeof window !== "undefined") {
+        window.sessionStorage.removeItem(SESSION_KEY);
+      }
+    },
+  })));
+
+// 2. Export useGlobalStore wrapper around the singleton store instance
+export const useGlobalStore = <T>(selector: (state: GlobalState) => T): T =>
+  create(storeApi)(selector);
+
+// Expose state methods directly on function for imperative calls (e.g. useGlobalStore.getState())
+useGlobalStore.getState = storeApi.getState;
+useGlobalStore.setState = storeApi.setState;
+useGlobalStore.subscribe = storeApi.subscribe;
+
+/**
+ * No longer triggers side-effects during render.
+ * Rehydrates session synchronously before React renders to prevent hydration mismatch.
+ */
+export function hydrateSession(): void {
+  const session = getInitialSession();
+  if (session.auth || session.user) {
+    storeApi.setState(session);
   }
 }
 
@@ -64,3 +107,6 @@ export function hydrateSession(): void {
 export const useAuthToken = () => useGlobalStore((s) => s.auth?.token ?? null);
 export const useCurrentUser = () => useGlobalStore((s) => s.user);
 export const useTheme = () => useGlobalStore((s) => s.theme);
+export const useCart = () => useGlobalStore((s) => s.cart);
+export const useCartCount = () =>
+  useGlobalStore((s) => s.cart.reduce((sum, item) => sum + item.quantity, 0));

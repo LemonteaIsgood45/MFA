@@ -22,7 +22,11 @@ export default function ServiceList(props: RemoteModuleProps) {
         setBanners(loadedBanners);
       })
       .catch((loadError: unknown) => {
-        setError(loadError instanceof Error ? loadError.message : "Could not load catalogue data.");
+        setError(
+          loadError instanceof Error
+            ? loadError.message
+            : "Could not load catalogue data.",
+        );
       });
   }, []);
 
@@ -32,12 +36,16 @@ export default function ServiceList(props: RemoteModuleProps) {
         {error ? (
           <p className="p-6 text-sm text-red-600">{error}</p>
         ) : products.length === 0 ? (
-          <p className="p-6 text-sm text-gray-500 dark:text-slate-400">Đang tải sản phẩm...</p>
+          <p className="p-6 text-sm text-gray-500 dark:text-slate-400">
+            Đang tải sản phẩm...
+          </p>
         ) : view.name === "list" ? (
           <ProductListPage
             products={products}
             banners={banners}
-            onSelectProduct={(productId) => setView({ name: "detail", productId })}
+            onSelectProduct={(productId) =>
+              setView({ name: "detail", productId })
+            }
           />
         ) : (
           <ProductDetailPage

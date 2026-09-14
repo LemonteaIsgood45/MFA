@@ -1,5 +1,6 @@
 import { useState } from "react";
 import QuantitySelector from "./QuantitySelector";
+import { addToCart } from "@/lib/cart";
 import type { Product } from "@/types/product";
 
 interface ProductDetailPageProps {
@@ -8,22 +9,35 @@ interface ProductDetailPageProps {
   token?: string | null;
 }
 
-export default function ProductDetailPage({ product, onBack, token }: ProductDetailPageProps) {
+export default function ProductDetailPage({
+  product,
+  onBack,
+  token,
+}: ProductDetailPageProps) {
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
 
   // One selected option per variant group, e.g. { duration: "v3" } for an
   // eSIM plan, or { color: "black", capacity: "20000" } for a product that
   // declares two groups. Seeded with each group's first option.
   const [selections, setSelections] = useState<Record<string, string>>(() =>
-    Object.fromEntries((product?.variantGroups ?? []).map((group) => [group.id, group.options[0]?.id]))
+    Object.fromEntries(
+      (product?.variantGroups ?? []).map((group) => [
+        group.id,
+        group.options[0]?.id,
+      ]),
+    ),
   );
+
   const [quantity, setQuantity] = useState(1);
   const [feedback, setFeedback] = useState<string | null>(null);
 
   if (!product) {
     return (
       <div className="p-6">
-        <button onClick={onBack} className="text-sm text-red-600 hover:underline">
+        <button
+          onClick={onBack}
+          className="text-sm text-red-600 hover:underline"
+        >
           ← Quay lại
         </button>
         <p className="mt-4">Không tìm thấy sản phẩm.</p>
@@ -38,17 +52,42 @@ export default function ProductDetailPage({ product, onBack, token }: ProductDet
   const unitPrice = product.basePrice + totalDelta;
   const totalPrice = unitPrice * quantity;
 
-  function handleAction(label: string) {
+  function flash(message: string) {
+    setFeedback(message);
+    window.setTimeout(() => setFeedback(null), 3000);
+  }
+
+  async function handleAddToCart() {
     if (!token) {
-      setFeedback("Please sign in from the Host App before adding to cart or purchasing.");
+      flash(
+        "Please sign in from the Host App before adding to cart or purchasing.",
+      );
       return;
     }
-    const chosenLabels = product!.variantGroups
-      .map((group) => group.options.find((opt) => opt.id === selections[group.id])?.label)
-      .filter(Boolean)
-      .join(", ");
-    setFeedback(`${label}: ${quantity} × "${product!.name}"${chosenLabels ? ` (${chosenLabels})` : ""}`);
-    window.setTimeout(() => setFeedback(null), 3000);
+    try {
+      await addToCart(product!.id, selections, quantity, unitPrice, token);
+      flash(`Đã thêm vào giỏ hàng: ${quantity} × "${product!.name}"`);
+    } catch (err) {
+      flash(err instanceof Error ? err.message : "Có lỗi xảy ra.");
+    }
+  }
+
+  async function handleBuyNow() {
+    if (!token) {
+      flash(
+        "Please sign in from the Host App before adding to cart or purchasing.",
+      );
+      return;
+    }
+    try {
+      await addToCart(product!.id, selections, quantity, unitPrice, token);
+      // Module Federation loads this remote into host's own page/tab, so
+      // this correctly navigates the whole app to host's cart. In
+      // standalone dev mode there's no /cart route to land on — expected.
+      window.location.assign("/cart");
+    } catch (err) {
+      flash(err instanceof Error ? err.message : "Có lỗi xảy ra.");
+    }
   }
 
   return (
@@ -79,7 +118,11 @@ export default function ProductDetailPage({ product, onBack, token }: ProductDet
                   }`}
                   aria-label={`Xem ${image.alt}`}
                 >
-                  <img src={image.url} alt="" className="h-full w-full object-cover" />
+                  <img
+                    src={image.url}
+                    alt=""
+                    className="h-full w-full object-cover"
+                  />
                 </button>
               ))}
             </div>
@@ -104,7 +147,12 @@ export default function ProductDetailPage({ product, onBack, token }: ProductDet
                   <button
                     key={option.id}
                     type="button"
-                    onClick={() => setSelections((prev) => ({ ...prev, [group.id]: option.id }))}
+                    onClick={() =>
+                      setSelections((prev) => ({
+                        ...prev,
+                        [group.id]: option.id,
+                      }))
+                    }
                     className={`rounded-md border px-3 py-1.5 text-sm ${
                       selections[group.id] === option.id
                         ? "border-red-600 bg-red-50 text-red-600 dark:bg-red-500/10"
@@ -121,13 +169,15 @@ export default function ProductDetailPage({ product, onBack, token }: ProductDet
           <p className="mt-4 text-sm font-medium">Số lượng</p>
           <div className="mt-2 flex items-center gap-3">
             <QuantitySelector value={quantity} onChange={setQuantity} />
-            <span className="text-sm text-gray-400">{product.stock > 0 ? "Còn hàng" : "Hết hàng"}</span>
+            <span className="text-sm text-gray-400">
+              {product.stock > 0 ? "Còn hàng" : "Hết hàng"}
+            </span>
           </div>
 
           <div className="mt-6 flex gap-3">
             <button
               type="button"
-              onClick={() => handleAction("Đã thêm vào giỏ hàng")}
+              onClick={handleAddToCart}
               className="flex-1 rounded-md border border-red-600 px-4 py-2 text-sm font-semibold text-red-600 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:bg-red-500/10"
               disabled={!token}
             >
@@ -135,7 +185,7 @@ export default function ProductDetailPage({ product, onBack, token }: ProductDet
             </button>
             <button
               type="button"
-              onClick={() => handleAction("Đặt mua thành công")}
+              onClick={handleBuyNow}
               className="flex-1 rounded-md bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
               disabled={!token}
             >
@@ -160,8 +210,13 @@ export default function ProductDetailPage({ product, onBack, token }: ProductDet
         <table className="w-full text-sm">
           <tbody>
             {product.detailRows.map((row) => (
-              <tr key={row.label} className="border-b border-gray-100 last:border-0 dark:border-slate-700">
-                <td className="w-56 px-4 py-2.5 text-gray-500 dark:text-slate-400">{row.label}</td>
+              <tr
+                key={row.label}
+                className="border-b border-gray-100 last:border-0 dark:border-slate-700"
+              >
+                <td className="w-56 px-4 py-2.5 text-gray-500 dark:text-slate-400">
+                  {row.label}
+                </td>
                 <td className="px-4 py-2.5">{row.value}</td>
               </tr>
             ))}
@@ -169,7 +224,9 @@ export default function ProductDetailPage({ product, onBack, token }: ProductDet
         </table>
       </div>
 
-      <p className="mt-4 text-sm text-gray-500 dark:text-slate-400">{product.description}</p>
+      <p className="mt-4 text-sm text-gray-500 dark:text-slate-400">
+        {product.description}
+      </p>
     </div>
   );
 }

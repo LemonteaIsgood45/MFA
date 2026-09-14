@@ -53,10 +53,25 @@ const config: Configuration = {
         "./Dashboard": "./src/components/Dashboard",
       },
       shared: {
-        react: { singleton: true, requiredVersion: "^18.3.1" },
-        "react-dom": { singleton: true, requiredVersion: "^18.3.1" },
-        zustand: { singleton: true, requiredVersion: "^4.5.4" },
-        "@mfa/shared-store": { singleton: true },
+        react: {
+          singleton: true,
+          strictVersion: true,
+          requiredVersion: "^18.3.1",
+        },
+        "react-dom": {
+          singleton: true,
+          strictVersion: true,
+          requiredVersion: "^18.3.1",
+        },
+        zustand: {
+          singleton: true,
+          requiredVersion: "^4.5.4",
+        },
+        "@mfa/shared-store": {
+          singleton: true,
+          strictVersion: false,
+          requiredVersion: "*",
+        },
       },
     }),
     new HtmlWebpackPlugin({

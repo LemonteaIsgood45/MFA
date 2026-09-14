@@ -1,14 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Tabs from "./Tabs";
 import ProductsTab from "./ProductsTab";
 import UsersTab from "./UsersTab";
 import SalesTab from "./SalesTab";
 import { useAuthToken } from "@mfa/shared-store";
 import type { RemoteModuleProps } from "@mfa/shared-types";
-// Imported here (not just in bootstrap.tsx) so the CSS ships as part of
-// this exposed module's own chunk — bootstrap.tsx is only the standalone
-// entry and isn't loaded when the host consumes Dashboard via Module
-// Federation, so this is what makes Tailwind classes work there too.
 import "../index.css";
 
 const TABS = [
@@ -19,13 +15,19 @@ const TABS = [
 
 export default function Dashboard(props: RemoteModuleProps) {
   const storeToken = useAuthToken();
-  const token = props.token ?? storeToken;
-  const isDark = props.theme === "dark";
-
+  const [isMounted, setIsMounted] = useState(false);
   const [activeTab, setActiveTab] = useState("products");
 
+  // Defer dynamic state sync until client hydration completes
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  const token = props.token ?? (isMounted ? storeToken : null);
+  const isDark = props.theme === "dark";
+
   return (
-    <div className={isDark ? "dark" : undefined}>
+    <div className={isDark ? "dark" : ""}>
       <div className="min-h-screen bg-white p-6 text-gray-900 dark:bg-slate-900 dark:text-slate-100">
         <h1 className="text-xl font-semibold">Bảng điều khiển thống kê</h1>
         <div className="mt-4">

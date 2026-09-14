@@ -7,7 +7,8 @@ import { authRouter } from "./routes/auth.routes";
 import { productsRouter } from "./routes/products.routes";
 import { servicesRouter } from "./routes/services.routes";
 import { usersRouter } from "./routes/users.routes";
-import {catalogRouter} from "./routes/catalog.routes";
+import { catalogRouter } from "./routes/catalog.routes";
+import { cartRouter } from "./routes/cart.routes";
  
 dotenv.config();
  
@@ -27,6 +28,7 @@ app.use("/api/analytics", analyticsRouter);
 app.use("/api/products", productsRouter);
 app.use("/api/users", usersRouter);
 app.use("/api/catalog", catalogRouter);
+app.use("/api/cart", cartRouter);
  
 app.listen(port, async () => {
   console.log(`[backend] listening on http://localhost:${port}`);
