@@ -22,7 +22,7 @@ const config: Configuration = {
     headers: { "Access-Control-Allow-Origin": "*" },
   },
   output: {
-    publicPath: isProd ? "/analytics-app/" : "http://localhost:5002/",
+    publicPath: "auto",
     path: path.resolve(process.cwd(), "dist"),
     clean: true,
   },
