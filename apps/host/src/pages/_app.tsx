@@ -7,7 +7,6 @@ import {
   useGlobalStore,
   useTheme,
 } from "@mfa/shared-store";
-// @ts-expect-error - Next.js provides the global CSS type declarations at runtime.
 import "../styles/globals.css";
 
 export default function App({ Component, pageProps }: AppProps) {
