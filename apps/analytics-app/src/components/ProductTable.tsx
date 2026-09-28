@@ -52,7 +52,7 @@ export default function ProductTable({
             <td className="py-2.5">
               <div className="font-medium">{product.name}</div>
               {product.badge && (
-                <div className="text-xs text-gray-400">{product.badge}</div>
+                <div className="text-xs text-gray-400 dark:text-slate-500">{product.badge}</div>
               )}
             </td>
             <td className="py-2.5">
@@ -69,7 +69,7 @@ export default function ProductTable({
         ))}
         {products.length === 0 && (
           <tr>
-            <td colSpan={5} className="py-6 text-center text-gray-400">
+            <td colSpan={5} className="py-6 text-center text-gray-400 dark:text-slate-500">
               Không có sản phẩm phù hợp.
             </td>
           </tr>

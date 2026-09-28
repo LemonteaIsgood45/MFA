@@ -3,7 +3,7 @@ import Tabs from "./Tabs";
 import ProductsTab from "./ProductsTab";
 import UsersTab from "./UsersTab";
 import SalesTab from "./SalesTab";
-import { useAuthToken } from "@mfa/shared-store";
+import { useAuthToken, useTheme } from "@mfa/shared-store";
 import type { RemoteModuleProps } from "@mfa/shared-types";
 import "../index.css";
 
@@ -15,6 +15,7 @@ const TABS = [
 
 export default function Dashboard(props: RemoteModuleProps) {
   const storeToken = useAuthToken();
+  const storeTheme = useTheme();
   const [isMounted, setIsMounted] = useState(false);
   const [activeTab, setActiveTab] = useState("products");
 
@@ -24,7 +25,7 @@ export default function Dashboard(props: RemoteModuleProps) {
   }, []);
 
   const token = props.token ?? (isMounted ? storeToken : null);
-  const isDark = props.theme === "dark";
+  const isDark = (props.theme ?? storeTheme) === "dark";
 
   return (
     <div className={isDark ? "dark" : ""}>

@@ -1,5 +1,7 @@
 import Dashboard from "./components/Dashboard";
+import { useTheme } from "@mfa/shared-store";
 
 export default function App() {
-  return <Dashboard token={null} theme="light" />;
+  const theme = useTheme();
+  return <Dashboard token={null} theme={theme} />;
 }

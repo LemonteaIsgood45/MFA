@@ -32,7 +32,7 @@ export default function UserTable({
           >
             <td className="py-2.5">
               <div className="font-medium">{user.name}</div>
-              <div className="text-xs text-gray-400">{user.email}</div>
+              <div className="text-xs text-gray-400 dark:text-slate-500">{user.email}</div>
             </td>
             <td className="py-2.5">{user.role}</td>
             <td className="py-2.5">
@@ -80,7 +80,7 @@ export default function UserTable({
         ))}
         {users.length === 0 && (
           <tr>
-            <td colSpan={5} className="py-6 text-center text-gray-400">
+            <td colSpan={5} className="py-6 text-center text-gray-400 dark:text-slate-500">
               Không tìm thấy người dùng.
             </td>
           </tr>
