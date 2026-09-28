@@ -31,7 +31,7 @@ export default function LoginPage() {
           placeholder="Email"
           type="email"
           required
-          className="rounded-md border border-gray-300 px-3 py-2"
+          className="rounded-md border border-gray-300 px-3 py-2 dark:border-slate-600 dark:bg-slate-800"
         />
         <input
           value={password}
@@ -39,7 +39,7 @@ export default function LoginPage() {
           placeholder="Mật khẩu"
           type="password"
           required
-          className="rounded-md border border-gray-300 px-3 py-2"
+          className="rounded-md border border-gray-300 px-3 py-2 dark:border-slate-600 dark:bg-slate-800"
         />
         {error && <span className="text-red-600">{error}</span>}
         <button className="rounded-md bg-indigo-600 px-3 py-2 text-white">

@@ -169,7 +169,7 @@ export default function ProductDetailPage({
           <p className="mt-4 text-sm font-medium">Số lượng</p>
           <div className="mt-2 flex items-center gap-3">
             <QuantitySelector value={quantity} onChange={setQuantity} />
-            <span className="text-sm text-gray-400">
+            <span className="text-sm text-gray-400 dark:text-slate-500">
               {product.stock > 0 ? "Còn hàng" : "Hết hàng"}
             </span>
           </div>

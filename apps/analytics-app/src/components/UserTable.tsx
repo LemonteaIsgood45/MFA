@@ -37,10 +37,10 @@ export default function UserTable({
             <td className="py-2.5">{user.role}</td>
             <td className="py-2.5">
               <span
-                className={`inline-flex items-center gap-1.5 text-xs ${user.isActive ? "text-green-600" : "text-gray-400"}`}
+                className={`inline-flex items-center gap-1.5 text-xs ${user.isActive ? "text-green-600 dark:text-green-400" : "text-gray-400 dark:text-slate-500"}`}
               >
                 <span
-                  className={`h-1.5 w-1.5 rounded-full ${user.isActive ? "bg-green-500" : "bg-gray-300"}`}
+                  className={`h-1.5 w-1.5 rounded-full ${user.isActive ? "bg-green-500" : "bg-gray-300 dark:bg-slate-600"}`}
                 />
                 {user.isActive ? "Đang hoạt động" : "Không hoạt động"}
               </span>

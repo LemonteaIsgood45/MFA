@@ -18,7 +18,7 @@ export default function OtherProductCard({ product, onSelect }: OtherProductCard
         className="h-40 w-full rounded-md bg-gray-100 object-cover dark:bg-slate-700"
       />
       <p className="mt-2 line-clamp-2 text-sm">{product.name}</p>
-      <p className="text-xs text-gray-400">{product.stock > 0 ? "Còn hàng" : "Hết hàng"}</p>
+      <p className="text-xs text-gray-400 dark:text-slate-500">{product.stock > 0 ? "Còn hàng" : "Hết hàng"}</p>
       <p className="mt-1 text-sm font-bold text-red-600">
         {product.basePrice.toLocaleString("vi-VN")}đ
       </p>

@@ -19,7 +19,7 @@ export default function PlanCard({ plan, onSelect }: PlanCardProps) {
           className="h-40 w-full rounded-t-lg bg-gray-100 object-cover dark:bg-slate-700"
         />
         {plan.badge && (
-          <span className="absolute right-3 top-3 rounded bg-white px-2 py-0.5 text-[11px] font-semibold text-red-600 shadow">
+          <span className="absolute right-3 top-3 rounded bg-white px-2 py-0.5 text-[11px] font-semibold text-red-600 shadow dark:bg-slate-900">
             {plan.badge}
           </span>
         )}
