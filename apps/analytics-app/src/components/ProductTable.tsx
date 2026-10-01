@@ -13,7 +13,7 @@ function stockBadge(stock: number) {
       </span>
     );
   }
-  if (stock < 20) {
+  if (stock <= 30) {
     return (
       <span className="rounded bg-amber-100 px-2 py-0.5 text-xs text-amber-700 dark:bg-amber-500/10 dark:text-amber-400">
         Sắp hết
@@ -53,14 +53,28 @@ export default function ProductTable({
             <td className="py-2.5">
               <div className="font-medium">{product.name}</div>
               {product.badge && (
-                <div className="text-xs text-gray-400 dark:text-slate-500">{product.badge}</div>
+                <div className="text-xs text-gray-400 dark:text-slate-500">
+                  {product.badge}
+                </div>
               )}
             </td>
             <td className="py-2.5">
               {product.category === "esim" ? "eSIM" : "Phụ kiện"}
             </td>
             <td className="py-2.5">
-              {product.carrier ? <span className={`inline-flex items-center gap-2 rounded-full px-2.5 py-1 text-xs font-medium ${product.carrier === "GigaTel" ? "bg-violet-100 text-violet-700 dark:bg-violet-500/10 dark:text-violet-300" : product.carrier === "NovaMax" ? "bg-sky-100 text-sky-700 dark:bg-sky-500/10 dark:text-sky-300" : product.carrier === "SkyConnect" ? "bg-cyan-100 text-cyan-700 dark:bg-cyan-500/10 dark:text-cyan-300" : "bg-blue-100 text-blue-700 dark:bg-blue-500/10 dark:text-blue-300"}`}><span aria-hidden="true" className="h-2 w-2 rounded-full bg-current" />{product.carrier}</span> : <span className="text-gray-400">—</span>}
+              {product.carrier ? (
+                <span
+                  className={`inline-flex items-center gap-2 rounded-full px-2.5 py-1 text-xs font-medium ${product.carrier === "GigaTel" ? "bg-violet-100 text-violet-700 dark:bg-violet-500/10 dark:text-violet-300" : product.carrier === "NovaMax" ? "bg-sky-100 text-sky-700 dark:bg-sky-500/10 dark:text-sky-300" : product.carrier === "SkyConnect" ? "bg-cyan-100 text-cyan-700 dark:bg-cyan-500/10 dark:text-cyan-300" : "bg-blue-100 text-blue-700 dark:bg-blue-500/10 dark:text-blue-300"}`}
+                >
+                  <span
+                    aria-hidden="true"
+                    className="h-2 w-2 rounded-full bg-current"
+                  />
+                  {product.carrier}
+                </span>
+              ) : (
+                <span className="text-gray-400">—</span>
+              )}
             </td>
             <td className="py-2.5">
               {product.basePrice.toLocaleString("vi-VN")}đ
@@ -71,7 +85,10 @@ export default function ProductTable({
         ))}
         {products.length === 0 && (
           <tr>
-            <td colSpan={6} className="py-6 text-center text-gray-400 dark:text-slate-500">
+            <td
+              colSpan={6}
+              className="py-6 text-center text-gray-400 dark:text-slate-500"
+            >
               Không có sản phẩm phù hợp.
             </td>
           </tr>
