@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useRouter } from "next/router";
+import Link from "next/link";
 import { login } from "@/lib/auth";
 import { useGlobalStore } from "@mfa/shared-store";
 export default function LoginPage() {
@@ -46,6 +47,12 @@ export default function LoginPage() {
         <button className="rounded-md bg-indigo-600 px-3 py-2 text-white">
           Đăng nhập
         </button>
+        <p className="text-sm text-gray-500 dark:text-slate-400">
+          Chưa có tài khoản?{" "}
+          <Link href="/register" className="text-indigo-600 hover:underline">
+            Đăng ký
+          </Link>
+        </p>
       </form>
     </div>
   );
