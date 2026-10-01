@@ -8,6 +8,17 @@ interface AuthResponse {
   user: User;
 }
 
+const AUTH_SESSION_KEY = "mfa-auth-session";
+
+function persistAuthSession(session: AuthResponse): void {
+  if (typeof window !== "undefined") {
+    window.localStorage.setItem(AUTH_SESSION_KEY, JSON.stringify({
+      user: session.user,
+      auth: { token: session.token, expiresAt: session.expiresAt },
+    }));
+  }
+}
+
 export async function login(email: string, password: string): Promise<AuthResponse> {
   const res = await fetch(`${API_BASE}/api/auth/login`, {
     method: "POST",
@@ -19,7 +30,9 @@ export async function login(email: string, password: string): Promise<AuthRespon
     throw new Error("Đăng nhập thất bại");
   }
 
-  return res.json();
+  const session: AuthResponse = await res.json();
+  persistAuthSession(session);
+  return session;
 }
 
 export async function register(name: string, email: string, password: string): Promise<AuthResponse> {
@@ -34,5 +47,7 @@ export async function register(name: string, email: string, password: string): P
     throw new Error(body.error ?? "Đăng ký thất bại");
   }
 
-  return res.json();
+  const session: AuthResponse = await res.json();
+  persistAuthSession(session);
+  return session;
 }

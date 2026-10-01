@@ -21,15 +21,17 @@ type StoredSession = Pick<GlobalState, "user" | "auth">;
 
 function getInitialSession(): StoredSession {
   if (typeof window === "undefined") return { user: null, auth: null };
-  const raw = window.sessionStorage.getItem(SESSION_KEY);
+  const raw = window.localStorage.getItem(SESSION_KEY) ?? window.sessionStorage.getItem(SESSION_KEY);
   if (!raw) return { user: null, auth: null };
   try {
     const session = JSON.parse(raw) as StoredSession;
     if (session.auth && session.auth.expiresAt > Date.now() && session.user) {
       return session;
     }
+    window.localStorage.removeItem(SESSION_KEY);
     window.sessionStorage.removeItem(SESSION_KEY);
   } catch {
+    window.localStorage.removeItem(SESSION_KEY);
     window.sessionStorage.removeItem(SESSION_KEY);
   }
   return { user: null, auth: null };
@@ -37,7 +39,8 @@ function getInitialSession(): StoredSession {
 
 function saveSession(session: StoredSession): void {
   if (typeof window !== "undefined") {
-    window.sessionStorage.setItem(SESSION_KEY, JSON.stringify(session));
+    window.localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+    window.sessionStorage.removeItem(SESSION_KEY);
   }
 }
 
@@ -78,6 +81,7 @@ const storeApi =
     logout: () => {
       set({ user: null, auth: null, cart: [] });
       if (typeof window !== "undefined") {
+        window.localStorage.removeItem(SESSION_KEY);
         window.sessionStorage.removeItem(SESSION_KEY);
       }
     },
