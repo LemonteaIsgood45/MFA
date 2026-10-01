@@ -1,63 +1,56 @@
 # MFA — Micro-Frontend Architecture Demo
 
-```
-Host App (Shell)         Next.js 15 + TypeScript     :3000
-Service App (Remote 1)   React + Vite + TypeScript   :5001
-Analytics App (Remote 2) React + Webpack + TypeScript:5002
-Backend                  Node.js + Express + TS      :4000
-Database                 PostgreSQL (via Docker)     :5432
-```
+The repository contains a Next.js host, two independently served Module Federation remotes, an Express API, and PostgreSQL.
 
-Host fetches `ServiceList` from Service App and `Dashboard` from Analytics App at
-**runtime** — not bundled at build time. Each remote can be coded, dev-served, and
-deployed on its own. A Zustand store (`packages/shared-store`) is shared as a Module
-Federation **singleton**, so token/user/theme state stays in sync across all three apps
-without prop drilling, since Module Federation loads every remote into the host's same
-browser JS realm.
+| Application | Technology | Local URL |
+| --- | --- | --- |
+| Host | Next.js 15, React, TypeScript | `http://localhost:3000` |
+| Service remote | Vite, React, TypeScript | `http://localhost:5001` |
+| Analytics remote | Webpack, React, TypeScript | `http://localhost:5002` |
+| Backend | Express, TypeScript | `http://localhost:4000` |
+| Database | PostgreSQL 16 | `localhost:5432` |
 
-## Project layout
+The host loads `serviceApp/ServiceList` from the Vite `remoteEntry.js` and `analyticsApp/Dashboard` from the Webpack `remoteEntry.js` at runtime. Each remote can be deployed independently. A browser-global Zustand store shares session, theme, and cart state across the host and remotes. Cart changes are also persisted through the backend API.
 
-```
-MFA/
-  apps/
-    host/            Next.js shell — layout, routing, auth, remote loading
-    service-app/      Vite remote — exposes ./ServiceList
-    analytics-app/    Webpack remote — exposes ./Dashboard
-  backend/            Express API + PostgreSQL
-  packages/
-    shared-store/      Zustand global store (MF singleton)
-    shared-types/       Shared TS interfaces
-  docker-compose.yml   PostgreSQL container
-```
+## Setup
 
-## 1. Install dependencies
-
-From the repo root (npm workspaces wires up the `@mfa/*` packages automatically):
+Install dependencies from the repository root:
 
 ```bash
 npm install
-```
-
-## 2. Start PostgreSQL
-
-```bash
 npm run db:up
 ```
 
-This starts a `postgres:16-alpine` container and runs `backend/src/db/init.sql`
-automatically on first boot (creates tables + seed data: an admin user, 4 service
-plans, 6 months of revenue). Connect with **DBeaver** using:
+The database container initializes from `backend/src/db/init.sql` on its first start. Local environment files are ignored by Git. Configure these values in local `.env` files as needed:
 
-- Host: `localhost`, Port: `5432`, Database: `mfa_db`
-- User: `mfa_user`, Password: `mfa_password`
+| File | Variables |
+| --- | --- |
+| `backend/.env` | `DATABASE_URL`, `JWT_SECRET`, `PORT`, `CORS_ORIGIN` |
+| `apps/host/.env.local` | `NEXT_PUBLIC_BACKEND_URL`, `NEXT_PUBLIC_SERVICE_APP_URL`, `NEXT_PUBLIC_ANALYTICS_APP_URL` |
+| `apps/service-app/.env` | `VITE_BACKEND_URL` |
+| `apps/analytics-app/.env` | `BACKEND_URL` |
 
-## 3. Run everything (4 terminals, in this order)
+The host has separate URLs for the two remotes. The defaults point to the local ports in the table above.
+
+Start each app in a separate terminal:
 
 ```bash
-npm run dev:backend     # http://localhost:4000
-npm run dev:service     # http://localhost:5001  (Vite remote)
-npm run dev:analytics   # http://localhost:5002  (Webpack remote)
-npm run dev:host        # http://localhost:3000  (Next.js shell)
+npm run dev:backend
+npm run dev:service
+npm run dev:analytics
+npm run dev:host
 ```
 
-Stuff
+Open `http://localhost:3000/login`. Protected host routes redirect to sign-in, and analytics access is limited to admin and moderator accounts by both the host and API. For the local demo database, sign in with `admin@mfa.dev` / `password123`; do not reuse these demo credentials outside a local development database.
+
+## Project layout
+
+```text
+apps/host/          Next.js shell, auth, navigation, runtime remote loading
+apps/service-app/   Vite remote, product catalogue and cart actions
+apps/analytics-app/ Webpack remote, product, sales and user dashboards
+backend/            Express API and PostgreSQL schema/seed data
+packages/            Shared TypeScript contracts and Zustand store
+```
+
+Each remote has its own error boundary in the host, so a failed remote does not take down the rest of the app.

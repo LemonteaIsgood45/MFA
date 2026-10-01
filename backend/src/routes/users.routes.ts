@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { pool } from "../db/pool";
-import { requireAuth, type AuthedRequest } from "../middleware/auth.middleware";
+import { requireAuth, requireAnalyticsAccess, type AuthedRequest } from "../middleware/auth.middleware";
 
 export const usersRouter = Router();
 usersRouter.use(requireAuth);
@@ -21,7 +21,7 @@ usersRouter.post("/me/purchases", async (req: AuthedRequest, res) => {
   const { rows } = await pool.query("UPDATE users SET purchase_history = purchase_history || jsonb_build_array($1::jsonb) WHERE id = $2 RETURNING purchase_history AS \"purchaseHistory\"", [JSON.stringify({ ...item, purchasedAt: new Date().toISOString() }), req.userId]);
   res.status(201).json({ purchaseHistory: rows[0]?.purchaseHistory ?? [] });
 });
-usersRouter.get("/stats", requireAuth, async (_req, res) => {
+usersRouter.get("/stats", requireAuth, requireAnalyticsAccess, async (_req, res) => {
   const totalUsers = await pool.query(`SELECT COUNT(*)::int AS count FROM users`);
   const activeSessions = await pool.query(
     `SELECT COUNT(DISTINCT user_id)::int AS count
@@ -36,7 +36,7 @@ usersRouter.get("/stats", requireAuth, async (_req, res) => {
 });
  
 // List + search. ?search= matches name or email, case-insensitively.
-usersRouter.get("/", requireAuth, async (req, res) => {
+usersRouter.get("/", requireAuth, requireAnalyticsAccess, async (req, res) => {
   const { search } = req.query as { search?: string };
  
   const { rows } = await pool.query(
@@ -54,7 +54,7 @@ usersRouter.get("/", requireAuth, async (req, res) => {
   res.json(rows);
 });
  
-usersRouter.patch("/:id/ban", requireAuth, async (req, res) => {
+usersRouter.patch("/:id/ban", requireAuth, requireAnalyticsAccess, async (req, res) => {
   const { id } = req.params;
   const { isBanned } = req.body as { isBanned: boolean };
  
@@ -72,7 +72,7 @@ usersRouter.patch("/:id/ban", requireAuth, async (req, res) => {
 // Mock reset: sets password_hash to a fixed placeholder and returns a
 // one-time demo password. A real backend would email a reset link instead
 // of returning a password directly — this is a stand-in for the demo.
-usersRouter.post("/:id/reset-password", requireAuth, async (req, res) => {
+usersRouter.post("/:id/reset-password", requireAuth, requireAnalyticsAccess, async (req, res) => {
   const { id } = req.params;
   const demoPassword = "Reset@123";
  

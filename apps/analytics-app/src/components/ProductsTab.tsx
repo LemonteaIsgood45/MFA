@@ -23,6 +23,10 @@ export default function ProductsTab({ token }: ProductsTabProps) {
   const [category, setCategory] = useState<CategoryFilter>("all");
   const [sortKey, setSortKey] = useState<ProductSortKey>("name");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
+  const [page, setPage] = useState(1);
+  const pageSize = 8;
+
+  useEffect(() => { setPage(1); }, [search, category]);
 
   useEffect(() => {
     if (!token) return;
@@ -49,6 +53,24 @@ export default function ProductsTab({ token }: ProductsTabProps) {
     return sorted;
   }, [products, category, search, sortKey, sortDir]);
 
+  const pageCount = Math.max(1, Math.ceil(visibleProducts.length / pageSize));
+  const pageProducts = visibleProducts.slice((page - 1) * pageSize, page * pageSize);
+
+  function exportCsv() {
+    const escape = (value: string | number) => `"${String(value).replace(/"/g, '""')}"`;
+    const rows = [
+      ["ID", "Name", "Type", "Carrier", "Price", "Stock"],
+      ...visibleProducts.map((product) => [product.id, product.name, product.category, product.carrier ?? "", product.basePrice, product.stock]),
+    ];
+    const csv = `\uFEFF${rows.map((row) => row.map(escape).join(",")).join("\r\n")}`;
+    const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = "products.csv";
+    anchor.click();
+    URL.revokeObjectURL(url);
+  }
+
   if (!token) {
     return <p>Vui lòng đăng nhập để xem sản phẩm.</p>;
   }
@@ -72,8 +94,18 @@ export default function ProductsTab({ token }: ProductsTabProps) {
         }
       />
 
+      <div className="mt-3 flex items-center justify-between text-sm">
+        <span className="text-gray-500 dark:text-slate-400">{visibleProducts.length} sản phẩm</span>
+        <button type="button" onClick={exportCsv} className="rounded-md border border-gray-300 px-3 py-1.5 hover:bg-gray-100 dark:border-slate-600 dark:hover:bg-slate-700">Xuất CSV</button>
+      </div>
+
       <div className="mt-4 overflow-x-auto">
-        <ProductTable products={visibleProducts} onRowClick={setSelected} />
+        <ProductTable products={pageProducts} onRowClick={setSelected} />
+      </div>
+      <div className="mt-3 flex items-center justify-end gap-3 text-sm">
+        <button type="button" disabled={page <= 1} onClick={() => setPage((current) => Math.max(1, current - 1))} className="rounded border border-gray-300 px-3 py-1.5 disabled:opacity-40 dark:border-slate-600">Trước</button>
+        <span>Trang {Math.min(page, pageCount)} / {pageCount}</span>
+        <button type="button" disabled={page >= pageCount} onClick={() => setPage((current) => Math.min(pageCount, current + 1))} className="rounded border border-gray-300 px-3 py-1.5 disabled:opacity-40 dark:border-slate-600">Tiếp</button>
       </div>
 
       <div className="mt-8">

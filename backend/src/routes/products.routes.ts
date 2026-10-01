@@ -1,13 +1,14 @@
 import { Router } from "express";
 import { pool } from "../db/pool";
-import { requireAuth } from "../middleware/auth.middleware";
+import { requireAuth, requireAnalyticsAccess } from "../middleware/auth.middleware";
 
 export const productsRouter = Router();
+productsRouter.use(requireAuth, requireAnalyticsAccess);
 
 // Full catalogue with images attached, one row per product. Sorting and
 // filtering happen client-side in analytics-app since the catalogue is
 // small — no query params needed here.
-productsRouter.get("/", requireAuth, async (_req, res) => {
+productsRouter.get("/", async (_req, res) => {
   const { rows } = await pool.query(`
     SELECT
       p.id,
@@ -38,7 +39,7 @@ productsRouter.get("/", requireAuth, async (_req, res) => {
 
 // General edit — name, price, description. Stock has its own endpoint
 // below since "add stock" is a distinct, more frequent action.
-productsRouter.patch("/:id", requireAuth, async (req, res) => {
+productsRouter.patch("/:id", async (req, res) => {
   const { id } = req.params;
   const { name, basePrice, description } = req.body as {
     name?: string;
@@ -64,7 +65,7 @@ productsRouter.patch("/:id", requireAuth, async (req, res) => {
 
 // Dedicated stock adjustment — positive delta to restock, negative to
 // correct a count. Clamped at 0 so a bad delta can't go negative.
-productsRouter.post("/:id/stock", requireAuth, async (req, res) => {
+productsRouter.post("/:id/stock", async (req, res) => {
   const { id } = req.params;
   const { delta } = req.body as { delta?: number };
 

@@ -9,7 +9,11 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   transpilePackages: ["@mfa/shared-store", "@mfa/shared-types"],
-  allowedDevOrigins: ["192.168.32.22"],
+  allowedDevOrigins: [
+    "192.168.200.22",
+    "192.168.200.22:3000",
+    "localhost:3000",
+  ],
 };
 
 export default nextConfig;

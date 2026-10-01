@@ -28,34 +28,10 @@ analyticsRouter.get("/summary", requireAuth, requireAnalyticsAccess, async (_req
   });
 });
 
-analyticsRouter.get("/summary", requireAuth, async (_req, res) => {
-  const revenueResult = await pool.query(
-    "SELECT month, revenue FROM revenue_by_month ORDER BY month ASC"
-  );
-  const subsResult = await pool.query(
-    "SELECT COALESCE(SUM(subscriber_count), 0) AS total FROM service_plans WHERE status = 'active'"
-  );
- 
-  const revenueByMonth = revenueResult.rows.map((r) => ({
-    month: r.month as string,
-    revenue: Number(r.revenue),
-  }));
- 
-  const totalRevenue = revenueByMonth.reduce((sum, r) => sum + r.revenue, 0);
-  const totalSubscribers = Number(subsResult.rows[0]?.total ?? 0);
- 
-  res.json({
-    totalRevenue,
-    totalSubscribers,
-    churnRate: 2.4,
-    revenueByMonth,
-  });
-});
- 
 // Sales tab data: monthly revenue (still from the precomputed table — a
 // realistic-looking rollup), plus two more charts derived from the actual
 // orders/order_items rows so it's not just re-displaying the same number.
-analyticsRouter.get("/sales", requireAuth, async (_req, res) => {
+analyticsRouter.get("/sales", requireAuth, requireAnalyticsAccess, async (_req, res) => {
   const revenueByMonth = await pool.query(
     `SELECT month, revenue FROM revenue_by_month ORDER BY month ASC`
   );
@@ -94,7 +70,7 @@ analyticsRouter.get("/sales", requireAuth, async (_req, res) => {
 });
  
 // Product-type breakdown for the Products tab's pie chart.
-analyticsRouter.get("/product-mix", requireAuth, async (_req, res) => {
+analyticsRouter.get("/product-mix", requireAuth, requireAnalyticsAccess, async (_req, res) => {
   const { rows } = await pool.query(
     `SELECT
        CASE WHEN category = 'esim' THEN COALESCE(carrier, 'Khác') ELSE 'Phụ kiện' END AS label,

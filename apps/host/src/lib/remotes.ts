@@ -18,12 +18,12 @@ function ensureInit() {
     remotes: [
       {
         name: "serviceApp",
-        entry: `${SERVICE_APP_URL}/assets/remoteEntry.js`,
+        entry: `${SERVICE_APP_URL.replace(/\/$/, "")}/assets/remoteEntry.js`,
         type: "module",
       },
       {
         name: "analyticsApp",
-        entry: `${ANALYTICS_APP_URL}/remoteEntry.js`,
+        entry: `${ANALYTICS_APP_URL.replace(/\/$/, "")}/remoteEntry.js`,
       },
     ],
     shared: {

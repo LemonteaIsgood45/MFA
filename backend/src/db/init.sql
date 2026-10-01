@@ -110,10 +110,12 @@ CREATE TABLE IF NOT EXISTS order_items (
   unit_price INTEGER NOT NULL CHECK (unit_price >= 0)
 );
 
--- Seed data (password for the demo admin user is "password123", hashed with bcrypt offline)
+-- Seed data (password for the demo admin user is "password123").
 INSERT INTO users (name, email, password_hash, role)
-VALUES ('Admin Demo', 'admin@mfa.dev', '$2b$10$CwTycUXWue0Thq9StjUM0uJ8Y3sq6zX8vHnFZm3zNz.d1ZnW3v0Wi', 'admin')
-ON CONFLICT (email) DO NOTHING;
+VALUES ('Admin Demo', 'admin@mfa.dev', '$2a$10$RqiFirVt6/qdLHPH6xfVc.Hu9x9G38./Le3wTcE8X2M/MptvMVbiC', 'admin')
+ON CONFLICT (email) DO UPDATE
+SET password_hash = EXCLUDED.password_hash,
+    role = EXCLUDED.role;
 
 INSERT INTO service_plans (name, description, price, status, subscriber_count) VALUES
   ('Gói Cơ Bản', 'Gói dịch vụ dữ liệu tốc độ chuẩn', 99000, 'active', 1240),

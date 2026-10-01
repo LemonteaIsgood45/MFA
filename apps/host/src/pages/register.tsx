@@ -61,7 +61,7 @@ export default function RegisterPage() {
         </button>
         <p className="text-sm text-gray-500 dark:text-slate-400">
           Đã có tài khoản?{" "}
-          <Link href="/" className="text-indigo-600 hover:underline">
+          <Link href="/login" className="text-indigo-600 hover:underline">
             Đăng nhập
           </Link>
         </p>

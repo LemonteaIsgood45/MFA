@@ -3,6 +3,7 @@ import React, { Suspense } from "react";
 import Layout from "@/components/Layout";
 import { loadRemoteComponent } from "@/lib/remotes";
 import { useAuthToken, useTheme } from "@mfa/shared-store";
+import RemoteErrorBoundary from "@/components/RemoteErrorBoundary";
 
 const RemoteServiceList = dynamic(() => loadRemoteComponent("serviceApp/ServiceList"), {
   ssr: false,
@@ -15,9 +16,11 @@ export default function ServicesPage() {
 
   return (
     <Layout>
-      <Suspense fallback={<p>Đang tải...</p>}>
-        <RemoteServiceList token={token} theme={theme} />
-      </Suspense>
+      <RemoteErrorBoundary remoteName="Service App">
+        <Suspense fallback={<p>Đang tải Service App...</p>}>
+          <RemoteServiceList token={token} theme={theme} />
+        </Suspense>
+      </RemoteErrorBoundary>
     </Layout>
   );
 }

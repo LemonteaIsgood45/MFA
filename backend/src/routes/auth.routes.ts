@@ -6,25 +6,33 @@ import { pool } from "../db/pool";
 export const authRouter = Router();
 
 authRouter.post("/login", async (req, res) => {
-  const { email } = req.body as { email?: string; password?: string };
+  const { email, password } = req.body as { email?: string; password?: string };
 
-  if (!email) {
-    return res.status(400).json({ error: "email is required" });
+  if (!email || !password) {
+    return res.status(400).json({ error: "email and password are required" });
   }
 
   const { rows } = await pool.query(
-    "SELECT id, name, email, role FROM users WHERE email = $1 LIMIT 1",
+    "SELECT id, name, email, password_hash, role, is_banned FROM users WHERE email = $1 LIMIT 1",
     [email]
   );
 
-  const user = rows[0] ?? {
-    id: "mock-user-id",
-    name: "Demo User",
-    email,
-    role: "staff",
+  const record = rows[0];
+  if (!record || !(await bcrypt.compare(password, record.password_hash))) {
+    return res.status(401).json({ error: "Email or password is incorrect" });
+  }
+  if (record.is_banned) {
+    return res.status(403).json({ error: "This account has been disabled" });
+  }
+
+  const user = {
+    id: record.id as string,
+    name: record.name as string,
+    email: record.email as string,
+    role: record.role as "admin" | "moderator" | "customer",
   };
 
-  const token = jwt.sign({ sub: user.id }, process.env.JWT_SECRET ?? "dev-secret-change-me", {
+  const token = jwt.sign({ sub: user.id, role: user.role }, process.env.JWT_SECRET ?? "dev-secret-change-me", {
     expiresIn: "8h",
   });
 

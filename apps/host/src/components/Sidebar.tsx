@@ -24,7 +24,7 @@ export default function Sidebar() {
   );
 
   return (
-    <nav className="flex w-max shrink-0 flex-col gap-2 whitespace-nowrap border-rp-4">
+    <nav className="flex w-56 shrink-0 flex-col gap-2 border-r border-border p-4">
       {visibleLinks.map((link) => (
         <Link
           key={link.href}

@@ -6,8 +6,8 @@ export default function LoginPage() {
   const router = useRouter();
   const setUser = useGlobalStore((s) => s.setUser);
   const setAuth = useGlobalStore((s) => s.setAuth);
-  const [email, setEmail] = useState("admin@mfa.dev");
-  const [password, setPassword] = useState("password123");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   async function submit(event: React.FormEvent) {
     event.preventDefault();
@@ -16,7 +16,8 @@ export default function LoginPage() {
       const result = await login(email, password);
       setUser(result.user);
       setAuth({ token: result.token, expiresAt: result.expiresAt });
-      await router.replace("/");
+      const next = typeof router.query.next === "string" ? router.query.next : "/";
+      await router.replace(next.startsWith("/") && !next.startsWith("//") ? next : "/");
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Đã có lỗi xảy ra");
     }
