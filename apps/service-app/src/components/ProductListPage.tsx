@@ -11,9 +11,10 @@ interface ProductListPageProps {
   onSelectProduct: (productId: string) => void;
   products: Product[];
   banners: PromoBanner[];
+  token?: string | null;
 }
 
-export default function ProductListPage({ onSelectProduct, products, banners }: ProductListPageProps) {
+export default function ProductListPage({ onSelectProduct, products, banners, token }: ProductListPageProps) {
   const [activeCarrier, setActiveCarrier] = useState("Tất cả");
   const esimPlans = useMemo(() => products.filter((product) => product.category === "esim"), [products]);
   const accessories = useMemo(() => products.filter((product) => product.category === "accessory"), [products]);
@@ -33,7 +34,7 @@ export default function ProductListPage({ onSelectProduct, products, banners }: 
 
       <HorizontalScroller title="Gói eSIM nổi bật">
         {visiblePlans.map((plan) => (
-          <PlanCard key={plan.id} plan={plan} onSelect={onSelectProduct} />
+          <PlanCard key={plan.id} plan={plan} onSelect={onSelectProduct} token={token} />
         ))}
       </HorizontalScroller>
 

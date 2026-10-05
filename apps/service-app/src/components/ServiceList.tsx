@@ -43,6 +43,7 @@ export default function ServiceList(props: RemoteModuleProps) {
           <ProductListPage
             products={products}
             banners={banners}
+            token={props.token}
             onSelectProduct={(productId) =>
               setView({ name: "detail", productId })
             }
